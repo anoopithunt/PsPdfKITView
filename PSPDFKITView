@@ -1,0 +1,99 @@
+import SwiftUI
+import PDFKit
+
+
+struct PSPDFKITView: View {
+    var urls = URL(string: "https://cloud.google.com/files/apigee/apigee-apis-for-dummies-ebook.pdf")!
+    var body: some View {
+        PDFKitView(url: urls)
+            }
+
+            struct PDFKitView: View {
+                var url: URL
+
+                @State var currentPage: Int = 0
+                @State var total: Int = 0
+
+                var body: some View {
+                    VStack {
+                        PDFKitRepresentedView(url, $currentPage, $total)
+                          
+
+                      
+                        Spacer()
+                        Divider()
+                            .frame(height: 2)
+                            .background(Color.orange)
+                        HStack {
+                            Button("Prev") { currentPage -= 1 }
+                                
+                                .frame(width: 113, height: 55)
+                                .foregroundColor(.white)
+                                .background(Color.orange)
+                                
+                                .cornerRadius(22)
+                                .disabled(currentPage == 0)
+                            
+                            Spacer()
+                            Button("Next") { currentPage += 1 }
+                                .frame(width: 113, height: 55)
+                                .foregroundColor(.white)
+                                .background(Color.orange)
+                                .cornerRadius(22)
+                                .disabled(currentPage == total - 1)
+                        }.padding()
+                            .font(.system(size: 22))
+        
+                        
+                       
+                    }
+                    .background(Color.pink.opacity(0.3))
+                    .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height-72)
+                    .padding([.leading, .bottom, .trailing])
+                }
+            }
+
+            struct PDFKitRepresentedView: UIViewRepresentable {
+                let url: URL
+                @Binding var currentPage: Int
+                @Binding var total: Int
+
+                init(_ url: URL, _ currentPage: Binding<Int>, _ total: Binding<Int>) {
+                    self.url = url
+                    self._currentPage = currentPage
+                    self._total = total
+                }
+
+                func makeUIView(context: Context) -> UIView {
+                    guard let document = PDFDocument(url: self.url) else { return UIView() }
+
+                    let pdfView = PDFView()
+                    pdfView.document = document
+                    pdfView.displayMode = .singlePage
+                    pdfView.displayDirection = .horizontal
+                    pdfView.autoScales = true
+                    pdfView.usePageViewController(false)
+
+                    DispatchQueue.main.async {
+                        self.total = document.pageCount
+                        print("Total pages: \(total)")
+                    }
+                    return pdfView
+                }
+
+                func updateUIView(_ uiView: UIView, context: Context) {
+                    guard let pdfView = uiView as? PDFView else { return }
+
+                    if currentPage < total {
+                        pdfView.go(to: pdfView.document!.page(at: currentPage)!)
+                    }
+                }
+
+            }
+        }
+
+struct PSPDFKITView_Previews: PreviewProvider {
+    static var previews: some View {
+        PSPDFKITView()
+    }
+}
